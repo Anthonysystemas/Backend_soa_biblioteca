@@ -2,8 +2,6 @@ from pydantic import BaseModel, field_validator
 from datetime import datetime
 from typing import Optional
 
-# ===== Input DTOs =====
-
 class CreateLoanIn(BaseModel):
     book_id: int
 
@@ -13,9 +11,6 @@ class CreateLoanIn(BaseModel):
         if v <= 0:
             raise ValueError('El ID del libro debe ser un número positivo')
         return v
-
-
-# ===== Output DTOs =====
 
 class CreateLoanOut(BaseModel):
     loan_id: int

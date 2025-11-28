@@ -1,4 +1,3 @@
-# app/users/routes.py
 from flask import Blueprint, request
 from pydantic import ValidationError
 from flask_jwt_extended import jwt_required, get_jwt_identity

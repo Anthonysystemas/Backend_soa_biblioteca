@@ -85,7 +85,7 @@ def create_loan():
                 "waitlist_id": waitlist_id,
                 "book_id": data.book_id,
                 "book_title": book.title
-            }, 202  # 202 Accepted - procesamiento asíncrono
+            }, 202
         
         active_count = Loan.query.filter_by(credential_id=uid, status=LoanStatus.ACTIVE).count()
         if active_count >= 5:

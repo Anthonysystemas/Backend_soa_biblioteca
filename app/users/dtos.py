@@ -2,14 +2,13 @@ from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 from datetime import date
 
-# ===== Input DTOs =====
 class UpdateProfileIn(BaseModel):
     full_name: Optional[str] = None
     phone: Optional[str] = None
     address: Optional[str] = None
     birth_date: Optional[date] = None
     dni: Optional[str] = None
-    user_type: Optional[str] = None  # "GENERAL", "STUDENT", "PROFESSOR"
+    user_type: Optional[str] = None
 
     @field_validator('full_name')
     @classmethod
@@ -39,8 +38,6 @@ class UpdateProfileIn(BaseModel):
             raise ValueError('El tipo de usuario debe ser: GENERAL, STUDENT o PROFESSOR')
         return v.upper() if v else None
 
-
-# ===== Output DTOs =====
 class UpdateProfileOut(BaseModel):
     user_id: int
     full_name: str

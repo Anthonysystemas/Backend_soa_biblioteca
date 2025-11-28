@@ -1,7 +1,7 @@
 # app/auth/routes.py
 from flask import Blueprint, request
 from pydantic import ValidationError
-from flask_jwt_extended import jwt_required, get_jwt_identity, jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from .dtos import LoginIn, RegisterIn
 from .service import (
     login as login_uc, me as me_uc, refresh as refresh_uc, register as register_uc

@@ -1,7 +1,11 @@
 import os
 
 class Config:
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///lib.db")
+    # Convertir postgresql:// a postgresql+psycopg:// para usar psycopg3
+    _db_url = os.getenv("DATABASE_URL", "sqlite:///lib.db")
+    if _db_url.startswith("postgresql://"):
+        _db_url = _db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    SQLALCHEMY_DATABASE_URI = _db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret")
     JWT_IDENTITY_CLAIM = "sub"

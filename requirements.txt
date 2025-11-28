@@ -5,6 +5,7 @@ Flask-Migrate==4.0.7
 Flask-Mail==0.10.0
 SQLAlchemy==2.0.34
 psycopg[binary]==3.2.1
+psycopg2-binary==2.9.9
 celery==5.4.0
 redis==5.0.8
 pydantic==2.8.2

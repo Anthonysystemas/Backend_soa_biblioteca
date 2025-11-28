@@ -4,7 +4,6 @@ from ..common.models import Book
 
 bp = Blueprint("catalog", __name__)
 
-# Manejadores de errores para el catálogo
 @bp.errorhandler(404)
 @bp.errorhandler(NotFound)
 def handle_not_found(e):

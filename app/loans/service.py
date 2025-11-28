@@ -96,7 +96,7 @@ def get_user_loans(credential_id: int, status_filter: Optional[str] = None) -> L
             status_enum = LoanStatus(status_filter.upper())
             query = query.filter_by(status=status_enum)
         except ValueError:
-            pass  # Ignorar filtro inválido
+            pass
     
     loans = query.order_by(Loan.loan_date.desc()).all()
     

@@ -5,7 +5,6 @@ from .dtos import UpdateProfileIn, UpdateProfileOut, UserProfileOut, DeactivateA
 
 
 def update_profile(credential_id: int, data: UpdateProfileIn) -> Optional[UpdateProfileOut]:
-    # Buscar credencial y perfil
     credential = Credential.query.get(credential_id)
     if not credential or not credential.is_active:
         return None
@@ -14,13 +13,11 @@ def update_profile(credential_id: int, data: UpdateProfileIn) -> Optional[Update
     if not profile:
         return None
 
-    # Verificar si el nuevo DNI ya está en uso por otro usuario
     if data.dni and data.dni != profile.dni:
         existing_dni = UserProfile.query.filter_by(dni=data.dni).first()
         if existing_dni and existing_dni.credential_id != credential_id:
-            return None  # DNI ya existe
+            return None
 
-    # Actualizar datos del perfil (solo los campos que se envían)
     if data.full_name is not None:
         profile.full_name = data.full_name
     if data.phone is not None:
@@ -75,7 +72,6 @@ def deactivate_account(credential_id: int) -> Optional[DeactivateAccountOut]:
     if not credential:
         return None
 
-    # Marcar credencial como inactiva
     credential.is_active = False
 
     db.session.commit()
