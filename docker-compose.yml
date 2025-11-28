@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: lib
+    ports: ["5433:5432"]
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: .
+    env_file: .env
+    ports: ["8080:8080"]
+    depends_on: [db, redis]
+    restart: unless-stopped
+    command: gunicorn -w 2 -b 0.0.0.0:8080 --reload app.wsgi:app
+    volumes:
+      - ./app:/app/app
+      - ./infrastructure:/app/infrastructure
+      - ./seed.py:/app/seed.py
+
+  worker:
+    build:
+      context: .
+      dockerfile: worker.Dockerfile
+    env_file: .env
+    environment:
+      - PYTHONPATH=/app
+    command: celery -A infrastructure.celery_app.celery worker -l info -Q default,waitlist
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+    volumes:
+      - ./app:/app/app
+      - ./infrastructure:/app/infrastructure
+
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+

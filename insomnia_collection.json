@@ -1,0 +1,365 @@
+﻿{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-11-28T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "wrk_backend_biblioteca",
+      "_type": "workspace",
+      "name": "Backend Biblioteca SOA",
+      "description": "API REST para Sistema de Biblioteca Digital",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:8080",
+        "access_token": "",
+        "refresh_token": ""
+      },
+      "parentId": "wrk_backend_biblioteca"
+    },
+    {
+      "_id": "folder_auth",
+      "_type": "request_group",
+      "name": "Auth",
+      "parentId": "wrk_backend_biblioteca"
+    },
+    {
+      "_id": "req_register",
+      "_type": "request",
+      "name": "Register",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/register",
+      "parentId": "folder_auth",
+      "headers": [{"name": "Content-Type", "value": "application/json"}],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"full_name\": \"Juan Pérez\",\n  \"email\": \"juan@example.com\",\n  \"password\": \"password123\",\n  \"confirm_password\": \"password123\"\n}"
+      }
+    },
+    {
+      "_id": "req_login",
+      "_type": "request",
+      "name": "Login",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "parentId": "folder_auth",
+      "headers": [{"name": "Content-Type", "value": "application/json"}],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"secret\"\n}"
+      }
+    },
+    {
+      "_id": "req_me",
+      "_type": "request",
+      "name": "Me",
+      "method": "GET",
+      "url": "{{ _.base_url }}/auth/me",
+      "parentId": "folder_auth",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+    },
+    {
+      "_id": "req_refresh",
+      "_type": "request",
+      "name": "Refresh Token",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/refresh",
+      "parentId": "folder_auth",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.refresh_token }}"}]
+    },
+    {
+      "_id": "req_list_users",
+      "_type": "request",
+      "name": "List Users",
+      "method": "GET",
+      "url": "{{ _.base_url }}/auth/users",
+      "parentId": "folder_auth",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+    },
+    {
+      "_id": "folder_catalog",
+      "_type": "request_group",
+      "name": "Catalog",
+      "parentId": "wrk_backend_biblioteca"
+    },
+    {
+      "_id": "req_list_books",
+      "_type": "request",
+      "name": "List Books",
+      "method": "GET",
+      "url": "{{ _.base_url }}/catalog/books",
+      "parentId": "folder_catalog"
+    },
+    {
+      "_id": "req_search_books",
+      "_type": "request",
+      "name": "Search Books",
+      "method": "GET",
+      "url": "{{ _.base_url }}/catalog/books?q=python",
+      "parentId": "folder_catalog"
+    },
+    {
+      "_id": "req_get_book",
+      "_type": "request",
+      "name": "Get Book",
+      "method": "GET",
+      "url": "{{ _.base_url }}/catalog/books/1",
+      "parentId": "folder_catalog"
+    },
+    {
+      "_id": "folder_users",
+      "_type": "request_group",
+      "name": "Users",
+      "parentId": "wrk_backend_biblioteca"
+    },
+    {
+      "_id": "req_get_profile",
+      "_type": "request",
+      "name": "Get Profile",
+      "method": "GET",
+      "url": "{{ _.base_url }}/users/1",
+      "parentId": "folder_users"
+    },
+    {
+      "_id": "req_update_profile",
+      "_type": "request",
+      "name": "Update Profile",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/users/profile",
+      "parentId": "folder_users",
+      "headers": [
+        {"name": "Authorization", "value": "Bearer {{ _.access_token }}"},
+        {"name": "Content-Type", "value": "application/json"}
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"full_name\": \"Juan Pérez García\",\n  \"phone\": \"+51 999888777\",\n  \"dni\": \"12345678\",\n  \"user_type\": \"STUDENT\"\n}"
+      }
+    },
+    {
+      "_id": "req_deactivate",
+      "_type": "request",
+      "name": "Deactivate Account",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/users/account",
+      "parentId": "folder_users",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+    },
+    {
+      "_id": "folder_loans",
+      "_type": "request_group",
+      "name": "Loans",
+      "parentId": "wrk_backend_biblioteca"
+    },
+    {
+      "_id": "req_create_loan",
+      "_type": "request",
+      "name": "Create Loan",
+      "method": "POST",
+      "url": "{{ _.base_url }}/loans",
+      "parentId": "folder_loans",
+      "headers": [
+        {"name": "Authorization", "value": "Bearer {{ _.access_token }}"},
+        {"name": "Content-Type", "value": "application/json"}
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"book_id\": 1\n}"
+      }
+    },
+    {
+      "_id": "req_list_loans",
+      "_type": "request",
+      "name": "List My Loans",
+      "method": "GET",
+      "url": "{{ _.base_url }}/loans",
+      "parentId": "folder_loans",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+    },
+    {
+      "_id": "req_list_active_loans",
+      "_type": "request",
+      "name": "List Active Loans",
+      "method": "GET",
+      "url": "{{ _.base_url }}/loans?status=ACTIVE",
+      "parentId": "folder_loans",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+    },
+    {
+      "_id": "req_get_loan",
+      "_type": "request",
+      "name": "Get Loan Details",
+      "method": "GET",
+      "url": "{{ _.base_url }}/loans/1",
+      "parentId": "folder_loans",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+    },
+    {
+      "_id": "req_return_loan",
+      "_type": "request",
+      "name": "Return Loan",
+      "method": "POST",
+      "url": "{{ _.base_url }}/loans/1/return",
+      "parentId": "folder_loans",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+    },
+    {
+      "_id": "req_renew_loan",
+      "_type": "request",
+      "name": "Renew Loan",
+      "method": "POST",
+      "url": "{{ _.base_url }}/loans/1/renew",
+      "parentId": "folder_loans",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+    },
+    {
+      "_id": "req_overdue_loans",
+      "_type": "request",
+      "name": "Overdue Loans",
+      "method": "GET",
+      "url": "{{ _.base_url }}/loans/overdue",
+      "parentId": "folder_loans",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+    },
+    {
+      "_id": "folder_waitlist",
+      "_type": "request_group",
+      "name": "Waitlist",
+      "parentId": "wrk_backend_biblioteca"
+    },
+    {
+      "_id": "req_my_waitlist",
+      "_type": "request",
+      "name": "My Waitlist",
+      "method": "GET",
+      "url": "{{ _.base_url }}/waitlist/me",
+      "parentId": "folder_waitlist",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+    },
+    {
+      "_id": "req_my_active_waitlist",
+      "_type": "request",
+      "name": "My Active Waitlist",
+      "method": "GET",
+      "url": "{{ _.base_url }}/waitlist/me/active",
+      "parentId": "folder_waitlist",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+    },
+    {
+      "_id": "req_cancel_waitlist",
+      "_type": "request",
+      "name": "Cancel Waitlist",
+      "method": "POST",
+      "url": "{{ _.base_url }}/waitlist/1/cancel",
+      "parentId": "folder_waitlist",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+    },
+    {
+      "_id": "folder_notifications",
+      "_type": "request_group",
+      "name": "Notifications",
+      "parentId": "wrk_backend_biblioteca"
+    },
+    {
+      "_id": "req_my_notifications",
+      "_type": "request",
+      "name": "My Notifications",
+      "method": "GET",
+      "url": "{{ _.base_url }}/notifications/me",
+      "parentId": "folder_notifications",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+    },
+    {
+      "_id": "req_unread_notifications",
+      "_type": "request",
+      "name": "Unread Notifications",
+      "method": "GET",
+      "url": "{{ _.base_url }}/notifications/me?unread_only=true",
+      "parentId": "folder_notifications",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+    },
+    {
+      "_id": "req_mark_read",
+      "_type": "request",
+      "name": "Mark as Read",
+      "method": "POST",
+      "url": "{{ _.base_url }}/notifications/1/read",
+      "parentId": "folder_notifications",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+    },
+    {
+      "_id": "req_mark_all_read",
+      "_type": "request",
+      "name": "Mark All as Read",
+      "method": "POST",
+      "url": "{{ _.base_url }}/notifications/read-all",
+      "parentId": "folder_notifications",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+    },
+    {
+      "_id": "folder_reports",
+      "_type": "request_group",
+      "name": "Reports",
+      "parentId": "wrk_backend_biblioteca"
+    },
+    {
+      "_id": "req_my_dashboard",
+      "_type": "request",
+      "name": "My Dashboard",
+      "method": "GET",
+      "url": "{{ _.base_url }}/reports/my/dashboard",
+      "parentId": "folder_reports",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}],
+      "description": "Dashboard personal con tarjetas y lectura por categoría"
+    },
+    {
+      "_id": "req_export_pdf",
+      "_type": "request",
+      "name": "Export PDF",
+      "method": "GET",
+      "url": "{{ _.base_url }}/reports/my/export/pdf",
+      "parentId": "folder_reports",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}],
+      "description": "Descarga el historial de lectura en PDF"
+    },
+    {
+      "_id": "req_all_categories",
+      "_type": "request",
+      "name": "All Categories",
+      "method": "GET",
+      "url": "{{ _.base_url }}/reports/books/categories",
+      "parentId": "folder_reports",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}],
+      "description": "Lista todas las categorías disponibles"
+    },
+    {
+      "_id": "req_books_by_category",
+      "_type": "request",
+      "name": "Books by Category",
+      "method": "GET",
+      "url": "{{ _.base_url }}/reports/books/category/TECHNOLOGY",
+      "parentId": "folder_reports",
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}],
+      "description": "Lista los libros de una categoría específica"
+    },
+    {
+      "_id": "folder_health",
+      "_type": "request_group",
+      "name": "Health",
+      "parentId": "wrk_backend_biblioteca"
+    },
+    {
+      "_id": "req_health",
+      "_type": "request",
+      "name": "Health Check",
+      "method": "GET",
+      "url": "{{ _.base_url }}/health",
+      "parentId": "folder_health"
+    }
+  ]
+}

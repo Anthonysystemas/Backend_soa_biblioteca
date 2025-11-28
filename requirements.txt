@@ -1,0 +1,13 @@
+Flask==3.0.3
+Flask-JWT-Extended==4.6.0
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.7
+Flask-Mail==0.10.0
+SQLAlchemy==2.0.34
+psycopg[binary]==3.2.1
+celery==5.4.0
+redis==5.0.8
+pydantic==2.8.2
+gunicorn==22.0.0
+email-validator==2.2.0
+reportlab==4.2.5
