@@ -14,11 +14,17 @@ celery.conf.update(
     result_serializer="json",
     task_routes={
         "waitlist.*": {"queue": "waitlist"},
+        "app.common.event_handlers.*": {"queue": "events"},
     },
     task_default_queue="default",
+    task_acks_late=True,
+    task_reject_on_worker_lost=True,
+    worker_prefetch_multiplier=1,
+    task_default_retry_delay=60,
+    task_max_retries=3,
 )
 
-celery.autodiscover_tasks(["app.waitlist"])
+celery.autodiscover_tasks(["app.waitlist", "app.common"])
 
 _flask_app = None
 def get_flask_app():
@@ -33,5 +39,18 @@ class AppContextTask(celery.Task):
         app = get_flask_app()
         with app.app_context():
             return super().__call__(*args, **kwargs)
+    
+    def on_failure(self, exc, task_id, args, kwargs, einfo):
+        """Called when task fails. Log to DLQ."""
+        from infrastructure.dlq import log_failed_task
+        log_failed_task(
+            task_name=self.name,
+            task_id=task_id,
+            args=args,
+            kwargs=kwargs,
+            error=str(exc),
+            traceback=str(einfo)
+        )
+        super().on_failure(exc, task_id, args, kwargs, einfo)
 
 celery.Task = AppContextTask

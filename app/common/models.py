@@ -136,5 +136,21 @@ class Report(db.Model):
     expires_at = db.Column(db.DateTime, nullable=True)
 
 
+class FailedTask(db.Model):
+    """Dead Letter Queue - stores failed Celery tasks"""
+    __tablename__ = "failed_tasks"
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.String(255), nullable=False, index=True)
+    task_name = db.Column(db.String(255), nullable=False)
+    args = db.Column(db.JSON, nullable=True)
+    kwargs = db.Column(db.JSON, nullable=True)
+    error_message = db.Column(db.String(500), nullable=True)
+    traceback = db.Column(db.Text, nullable=True)
+    retry_count = db.Column(db.Integer, default=0)
+    failed_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    last_retry_at = db.Column(db.DateTime, nullable=True)
+
+
+
 def create_all_tables():
     db.create_all()

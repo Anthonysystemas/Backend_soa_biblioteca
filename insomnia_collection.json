@@ -8,7 +8,7 @@
       "_id": "wrk_backend_biblioteca",
       "_type": "workspace",
       "name": "Backend Biblioteca SOA",
-      "description": "API REST para Sistema de Biblioteca Digital",
+      "description": "API REST con arquitectura SOA - Pub/Sub Events, DLQ, Flower Monitoring (port 5555)",
       "scope": "collection"
     },
     {
@@ -17,6 +17,7 @@
       "name": "Base Environment",
       "data": {
         "base_url": "http://localhost:8080",
+        "flower_url": "http://localhost:5555",
         "access_token": "",
         "refresh_token": ""
       },
@@ -35,7 +36,12 @@
       "method": "POST",
       "url": "{{ _.base_url }}/auth/register",
       "parentId": "folder_auth",
-      "headers": [{"name": "Content-Type", "value": "application/json"}],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"full_name\": \"Juan Pérez\",\n  \"email\": \"juan@example.com\",\n  \"password\": \"password123\",\n  \"confirm_password\": \"password123\"\n}"
@@ -48,7 +54,12 @@
       "method": "POST",
       "url": "{{ _.base_url }}/auth/login",
       "parentId": "folder_auth",
-      "headers": [{"name": "Content-Type", "value": "application/json"}],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"secret\"\n}"
@@ -61,7 +72,12 @@
       "method": "GET",
       "url": "{{ _.base_url }}/auth/me",
       "parentId": "folder_auth",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ]
     },
     {
       "_id": "req_refresh",
@@ -70,7 +86,12 @@
       "method": "POST",
       "url": "{{ _.base_url }}/auth/refresh",
       "parentId": "folder_auth",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.refresh_token }}"}]
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.refresh_token }}"
+        }
+      ]
     },
     {
       "_id": "req_list_users",
@@ -79,7 +100,12 @@
       "method": "GET",
       "url": "{{ _.base_url }}/auth/users",
       "parentId": "folder_auth",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ]
     },
     {
       "_id": "folder_catalog",
@@ -133,8 +159,14 @@
       "url": "{{ _.base_url }}/users/profile",
       "parentId": "folder_users",
       "headers": [
-        {"name": "Authorization", "value": "Bearer {{ _.access_token }}"},
-        {"name": "Content-Type", "value": "application/json"}
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
       ],
       "body": {
         "mimeType": "application/json",
@@ -148,7 +180,12 @@
       "method": "DELETE",
       "url": "{{ _.base_url }}/users/account",
       "parentId": "folder_users",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ]
     },
     {
       "_id": "folder_loans",
@@ -164,8 +201,14 @@
       "url": "{{ _.base_url }}/loans",
       "parentId": "folder_loans",
       "headers": [
-        {"name": "Authorization", "value": "Bearer {{ _.access_token }}"},
-        {"name": "Content-Type", "value": "application/json"}
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
       ],
       "body": {
         "mimeType": "application/json",
@@ -179,7 +222,12 @@
       "method": "GET",
       "url": "{{ _.base_url }}/loans",
       "parentId": "folder_loans",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ]
     },
     {
       "_id": "req_list_active_loans",
@@ -188,7 +236,12 @@
       "method": "GET",
       "url": "{{ _.base_url }}/loans?status=ACTIVE",
       "parentId": "folder_loans",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ]
     },
     {
       "_id": "req_get_loan",
@@ -197,7 +250,12 @@
       "method": "GET",
       "url": "{{ _.base_url }}/loans/1",
       "parentId": "folder_loans",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ]
     },
     {
       "_id": "req_return_loan",
@@ -206,7 +264,12 @@
       "method": "POST",
       "url": "{{ _.base_url }}/loans/1/return",
       "parentId": "folder_loans",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ]
     },
     {
       "_id": "req_renew_loan",
@@ -215,7 +278,12 @@
       "method": "POST",
       "url": "{{ _.base_url }}/loans/1/renew",
       "parentId": "folder_loans",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ]
     },
     {
       "_id": "req_overdue_loans",
@@ -224,7 +292,12 @@
       "method": "GET",
       "url": "{{ _.base_url }}/loans/overdue",
       "parentId": "folder_loans",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ]
     },
     {
       "_id": "folder_waitlist",
@@ -239,7 +312,12 @@
       "method": "GET",
       "url": "{{ _.base_url }}/waitlist/me",
       "parentId": "folder_waitlist",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ]
     },
     {
       "_id": "req_my_active_waitlist",
@@ -248,7 +326,12 @@
       "method": "GET",
       "url": "{{ _.base_url }}/waitlist/me/active",
       "parentId": "folder_waitlist",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ]
     },
     {
       "_id": "req_cancel_waitlist",
@@ -257,7 +340,12 @@
       "method": "POST",
       "url": "{{ _.base_url }}/waitlist/1/cancel",
       "parentId": "folder_waitlist",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ]
     },
     {
       "_id": "folder_notifications",
@@ -272,7 +360,12 @@
       "method": "GET",
       "url": "{{ _.base_url }}/notifications/me",
       "parentId": "folder_notifications",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ]
     },
     {
       "_id": "req_unread_notifications",
@@ -281,7 +374,12 @@
       "method": "GET",
       "url": "{{ _.base_url }}/notifications/me?unread_only=true",
       "parentId": "folder_notifications",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ]
     },
     {
       "_id": "req_mark_read",
@@ -290,7 +388,12 @@
       "method": "POST",
       "url": "{{ _.base_url }}/notifications/1/read",
       "parentId": "folder_notifications",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ]
     },
     {
       "_id": "req_mark_all_read",
@@ -299,7 +402,12 @@
       "method": "POST",
       "url": "{{ _.base_url }}/notifications/read-all",
       "parentId": "folder_notifications",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}]
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ]
     },
     {
       "_id": "folder_reports",
@@ -314,7 +422,12 @@
       "method": "GET",
       "url": "{{ _.base_url }}/reports/my/dashboard",
       "parentId": "folder_reports",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
       "description": "Dashboard personal con tarjetas y lectura por categoría"
     },
     {
@@ -324,7 +437,12 @@
       "method": "GET",
       "url": "{{ _.base_url }}/reports/my/export/pdf",
       "parentId": "folder_reports",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
       "description": "Descarga el historial de lectura en PDF"
     },
     {
@@ -334,7 +452,12 @@
       "method": "GET",
       "url": "{{ _.base_url }}/reports/books/categories",
       "parentId": "folder_reports",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
       "description": "Lista todas las categorías disponibles"
     },
     {
@@ -344,7 +467,12 @@
       "method": "GET",
       "url": "{{ _.base_url }}/reports/books/category/TECHNOLOGY",
       "parentId": "folder_reports",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.access_token }}"}],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
       "description": "Lista los libros de una categoría específica"
     },
     {
@@ -360,6 +488,29 @@
       "method": "GET",
       "url": "{{ _.base_url }}/health",
       "parentId": "folder_health"
+    },
+    {
+      "_id": "folder_monitoring",
+      "_type": "request_group",
+      "name": "Monitoring (SOA)",
+      "parentId": "wrk_backend_biblioteca"
+    },
+    {
+      "_id": "req_flower_ui",
+      "_type": "request",
+      "name": "Flower Dashboard",
+      "method": "GET",
+      "url": "{{ _.flower_url }}",
+      "parentId": "folder_monitoring",
+      "description": "Celery monitoring dashboard - Open in browser to see workers, queues (default, waitlist, events), tasks, and DLQ"
+    },
+    {
+      "_id": "req_flower_api_workers",
+      "_type": "request",
+      "name": "Flower API - Workers",
+      "method": "GET",
+      "url": "{{ _.flower_url }}/api/workers",
+      "parentId": "folder_monitoring"
     }
   ]
 }

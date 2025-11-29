@@ -5,6 +5,7 @@ from flask_jwt_extended import create_access_token, create_refresh_token
 from app.common.security import verify_password, hash_password
 from app.common.models import Credential, UserProfile, Notification, NotificationType
 from app.extensions import db
+from infrastructure.events import publish_user_registered
 from .dtos import (
     LoginIn, LoginOut, MeOut, RefreshOut, RegisterIn, RegisterOut
 )
@@ -77,6 +78,13 @@ def register(data: RegisterIn) -> Optional[RegisterOut]:
     )
     db.session.add(welcome_notification)
     db.session.commit()
+
+    # Publish user registered event
+    publish_user_registered(
+        user_id=new_credential.id,
+        email=new_credential.email,
+        full_name=data.full_name
+    )
 
     return RegisterOut(
         user_id=new_credential.id,

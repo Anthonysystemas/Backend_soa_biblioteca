@@ -2,6 +2,7 @@ from typing import Optional, List
 from datetime import datetime, timedelta
 from app.common.models import Loan, LoanStatus, Book, Credential, Waitlist, WaitlistStatus
 from app.extensions import db
+from infrastructure.events import publish_loan_created, publish_loan_returned, publish_loan_renewed
 from .dtos import (
     CreateLoanIn, CreateLoanOut, LoanDetailOut, LoanListItemOut,
     ReturnLoanOut, RenewLoanOut
@@ -76,6 +77,15 @@ def create_loan(credential_id: int, data: CreateLoanIn) -> Optional[CreateLoanOu
     )
     db.session.add(loan_notification)
     db.session.commit()
+    
+    # Publish loan created event
+    publish_loan_created(
+        loan_id=new_loan.id,
+        user_id=credential_id,
+        book_id=book.id,
+        book_title=book.title,
+        due_date=due_date.isoformat()
+    )
     
     return CreateLoanOut(
         loan_id=new_loan.id,
@@ -180,6 +190,14 @@ def return_loan(loan_id: int, credential_id: int) -> Optional[ReturnLoanOut]:
     db.session.add(return_notification)
     db.session.commit()
     
+    # Publish loan returned event
+    publish_loan_returned(
+        loan_id=loan.id,
+        user_id=credential_id,
+        book_id=book.id,
+        book_title=book.title
+    )
+    
     return ReturnLoanOut(
         loan_id=loan.id,
         book_id=book.id,
@@ -221,6 +239,14 @@ def renew_loan(loan_id: int, credential_id: int) -> Optional[RenewLoanOut]:
     loan.status = LoanStatus.RENEWED
     
     db.session.commit()
+    
+    # Publish loan renewed event
+    publish_loan_renewed(
+        loan_id=loan.id,
+        user_id=credential_id,
+        book_id=book.id,
+        new_due_date=loan.due_date.isoformat()
+    )
     
     return RenewLoanOut(
         loan_id=loan.id,

@@ -1,5 +1,6 @@
 from ..common.models import Waitlist, WaitlistStatus
 from ..extensions import db
+from infrastructure.events import publish_waitlist_added
 from .tasks import hold_copy_async
 
 def add_to_waitlist(credential_id: int, book_id: int) -> int:
@@ -7,4 +8,12 @@ def add_to_waitlist(credential_id: int, book_id: int) -> int:
     db.session.add(w)
     db.session.commit()
     hold_copy_async.delay(w.id)
+    
+    # Publish waitlist added event
+    publish_waitlist_added(
+        waitlist_id=w.id,
+        user_id=credential_id,
+        book_id=book_id
+    )
+    
     return w.id
