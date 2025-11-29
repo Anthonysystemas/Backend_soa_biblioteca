@@ -41,32 +41,17 @@ with app.app_context():
                  description="Programación Python clara y efectiva", available_copies=2),
             Book(isbn="9780596007973", title="Head First Design Patterns", author="Eric Freeman", 
                  category=BookCategory.TECHNOLOGY, pages=694, publication_year=2004,
-                 description="Patrones de diseño explicados de forma visual", available_copies=0),
+                 description="Patrones de diseño explicados de forma visual", available_copies=0), # Este tiene 0 stock
             Book(isbn="9780134685991", title="Effective Java", author="Joshua Bloch", 
                  category=BookCategory.TECHNOLOGY, pages=416, publication_year=2018,
                  description="Mejores prácticas para programación Java", available_copies=4),
             Book(isbn="9781617294136", title="Spring in Action", author="Craig Walls", 
                  category=BookCategory.TECHNOLOGY, pages=520, publication_year=2018,
                  description="Framework Spring para desarrollo Java", available_copies=2),
-            Book(isbn="9780062316097", title="Sapiens", author="Yuval Noah Harari",
-                 category=BookCategory.HISTORY, pages=443, publication_year=2014,
-                 description="Breve historia de la humanidad", available_copies=3),
-            Book(isbn="9780307352149", title="Atomic Habits", author="James Clear",
-                 category=BookCategory.SELF_HELP, pages=320, publication_year=2018,
-                 description="Pequeños cambios, resultados extraordinarios", available_copies=5),
-            Book(isbn="9780553380163", title="A Brief History of Time", author="Stephen Hawking",
-                 category=BookCategory.SCIENCE, pages=256, publication_year=1988,
-                 description="Del Big Bang a los agujeros negros", available_copies=2),
-            Book(isbn="9780060935467", title="Don Quixote", author="Miguel de Cervantes",
-                 category=BookCategory.LITERATURE, pages=1056, publication_year=1605,
-                 description="La gran novela de la literatura española", available_copies=3),
-            Book(isbn="9780316769488", title="The Catcher in the Rye", author="J.D. Salinger",
-                 category=BookCategory.FICTION, pages=277, publication_year=1951,
-                 description="Clásico de la literatura americana", available_copies=4),
         ]
         db.session.add_all(books)
         db.session.commit()
-        print("✓ Libros de ejemplo creados (10 libros con categorías)")
+        print("✓ Libros de ejemplo creados (5 libros con categorías, uno con 0 stock)")
     else:
         print("✓ Libros ya existen")
     
@@ -98,10 +83,10 @@ with app.app_context():
             )
             # No decrementa porque ya fue devuelto
             
-            # Create a renewed loan (Effective Java - NO el que tiene 0 stock)
+            # Create a renewed loan (Effective Java)
             loan3 = Loan(
                 credential_id=credential.id,
-                book_id=books[3].id,  # Effective Java (id=4) en lugar de Head First (id=3)
+                book_id=books[3].id, # books[3] es "Effective Java"
                 status=LoanStatus.RENEWED,
                 due_date=datetime.utcnow() + timedelta(days=20),
                 renewed=True
@@ -120,4 +105,3 @@ with app.app_context():
     print("   - Usuario: test@example.com / secret")
     print("   - Libros de ejemplo creados")
     print("   - Préstamos de ejemplo creados")
-

@@ -1,6 +1,6 @@
 from typing import Optional, List
 from datetime import datetime, timedelta
-from app.common.models import Loan, LoanStatus, Book, Credential, Waitlist, WaitlistStatus
+from app.common.models import Loan, LoanStatus, Book, Credential, Waitlist, WaitlistStatus, LoanHistory, LoanEventType
 from app.extensions import db
 from infrastructure.events import publish_loan_created, publish_loan_returned, publish_loan_renewed
 from .dtos import (
@@ -53,6 +53,11 @@ def create_loan(credential_id: int, data: CreateLoanIn) -> Optional[CreateLoanOu
         status=LoanStatus.ACTIVE,
         due_date=due_date,
         renewed=False
+    )
+    
+    # Add history event
+    new_loan.history.append(
+        LoanHistory(event_type=LoanEventType.CREATED, notes="Préstamo creado en el sistema")
     )
     
     if held_waitlist:
@@ -175,6 +180,11 @@ def return_loan(loan_id: int, credential_id: int) -> Optional[ReturnLoanOut]:
     loan.status = LoanStatus.RETURNED
     loan.return_date = datetime.utcnow()
     
+    # Add history event
+    loan.history.append(
+        LoanHistory(event_type=LoanEventType.RETURNED, notes="Libro devuelto por el usuario")
+    )
+
     book.available_copies += 1
     
     db.session.commit()
@@ -237,6 +247,14 @@ def renew_loan(loan_id: int, credential_id: int) -> Optional[RenewLoanOut]:
     loan.due_date = loan.due_date + timedelta(days=LOAN_DURATION_DAYS)
     loan.renewed = True
     loan.status = LoanStatus.RENEWED
+
+    # Add history event
+    loan.history.append(
+        LoanHistory(
+            event_type=LoanEventType.RENEWED, 
+            notes=f"Préstamo renovado. Nueva fecha de devolución: {loan.due_date.strftime('%d/%m/%Y')}"
+        )
+    )
     
     db.session.commit()
     

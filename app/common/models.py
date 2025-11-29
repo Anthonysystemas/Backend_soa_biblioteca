@@ -79,6 +79,26 @@ class Loan(db.Model):
     status = db.Column(db.Enum(LoanStatus), default=LoanStatus.ACTIVE)
     renewed = db.Column(db.Boolean, default=False)
 
+    history = db.relationship('LoanHistory', backref='loan', lazy=True, cascade="all, delete-orphan")
+
+
+class LoanEventType(str, Enum):
+    CREATED = "CREATED"
+    RETURNED = "RETURNED"
+    RENEWED = "RENEWED"
+    REMINDER_SENT = "REMINDER_SENT"
+
+
+class LoanHistory(db.Model):
+    __tablename__ = "loan_history"
+    id = db.Column(db.Integer, primary_key=True)
+    loan_id = db.Column(db.Integer, db.ForeignKey('loans.id'), nullable=False)
+    event_type = db.Column(db.Enum(LoanEventType), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    notes = db.Column(db.String(500), nullable=True)
+
+
+
 class WaitlistStatus(str, Enum):
     PENDING = "PENDING"
     HELD = "HELD"
