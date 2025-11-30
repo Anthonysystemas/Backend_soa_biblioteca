@@ -1,5 +1,5 @@
 from typing import Optional
-from app.common.models import Credential, UserProfile, UserType
+from app.common.models import Credential, UserProfile
 from app.extensions import db
 from .dtos import UpdateProfileIn, UpdateProfileOut, UserProfileOut, DeactivateAccountOut
 
@@ -24,12 +24,10 @@ def update_profile(credential_id: int, data: UpdateProfileIn) -> Optional[Update
         profile.phone = data.phone
     if data.address is not None:
         profile.address = data.address
-    if data.birth_date is not None:
-        profile.birth_date = data.birth_date
     if data.dni is not None:
         profile.dni = data.dni
-    if data.user_type is not None:
-        profile.user_type = UserType(data.user_type)
+    if data.university is not None:
+        profile.university = data.university
 
     db.session.commit()
 
@@ -39,9 +37,8 @@ def update_profile(credential_id: int, data: UpdateProfileIn) -> Optional[Update
         email=credential.email,
         phone=profile.phone,
         address=profile.address,
-        birth_date=profile.birth_date.isoformat() if profile.birth_date else None,
         dni=profile.dni,
-        user_type=profile.user_type.value,
+        university=profile.university,
         message="Perfil actualizado exitosamente"
     )
 
@@ -62,7 +59,7 @@ def get_user_profile(credential_id: int) -> Optional[UserProfileOut]:
         phone=profile.phone,
         address=profile.address,
         dni=profile.dni,
-        user_type=profile.user_type.value,
+        university=profile.university,
         is_active=credential.is_active
     )
 

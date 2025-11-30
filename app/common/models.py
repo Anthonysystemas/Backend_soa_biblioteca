@@ -4,9 +4,8 @@ from sqlalchemy import func
 from ..extensions import db
 
 
-# =============================================
 # AUTH - Tabla de credenciales (autenticación)
-# =============================================
+
 class Credential(db.Model):
     __tablename__ = "auth"
     id = db.Column(db.Integer, primary_key=True)
@@ -18,13 +17,7 @@ class Credential(db.Model):
     profile = db.relationship('UserProfile', backref='credential', uselist=False, lazy=True)
 
 
-# =============================================
 # USERS - Tabla de perfiles de usuario
-# =============================================
-class UserType(str, Enum):
-    GENERAL = "GENERAL"           # Público general
-    STUDENT = "STUDENT"           # Estudiante
-    PROFESSOR = "PROFESSOR"       # Profesor
 
 
 class UserProfile(db.Model):
@@ -34,9 +27,8 @@ class UserProfile(db.Model):
     full_name = db.Column(db.String(200), nullable=True)
     phone = db.Column(db.String(20), nullable=True)
     address = db.Column(db.String(300), nullable=True)
-    birth_date = db.Column(db.Date, nullable=True)
     dni = db.Column(db.String(20), unique=True, nullable=True)  # DNI o carnet
-    user_type = db.Column(db.Enum(UserType), default=UserType.GENERAL, nullable=False)
+    university = db.Column(db.String(200), nullable=True)  # Universidad
 
 class BookCategory(str, Enum):
     FICTION = "FICTION"

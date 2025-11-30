@@ -35,8 +35,16 @@ def login(data: LoginIn) -> Optional[LoginOut]:
 
 def me(credential_id: int) -> MeOut:
     credential = Credential.query.get(credential_id)
-    email = credential.email if credential else "unknown@example.com"
-    return MeOut(user_id=credential_id, email=email)
+    profile = UserProfile.query.filter_by(credential_id=credential_id).first()
+    
+    return MeOut(
+        user_id=credential_id,
+        email=credential.email if credential else "unknown@example.com",
+        full_name=profile.full_name if profile else "",
+        dni=profile.dni if profile else "",
+        phone=profile.phone if profile else "",
+        university=profile.university if profile else ""
+    )
 
 
 def refresh(credential_id: int) -> RefreshOut:
@@ -63,7 +71,10 @@ def register(data: RegisterIn) -> Optional[RegisterOut]:
     # Crear perfil de usuario (tabla users)
     new_profile = UserProfile(
         credential_id=new_credential.id,
-        full_name=data.full_name
+        full_name=data.full_name,
+        dni=data.dni,
+        phone=data.phone,
+        university=data.university
     )
     db.session.add(new_profile)
     db.session.commit()
@@ -90,5 +101,8 @@ def register(data: RegisterIn) -> Optional[RegisterOut]:
         user_id=new_credential.id,
         email=new_credential.email,
         full_name=data.full_name,
+        dni=data.dni,
+        phone=data.phone,
+        university=data.university,
         message="Usuario registrado exitosamente"
     )

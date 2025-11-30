@@ -1,14 +1,12 @@
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
-from datetime import date
 
 class UpdateProfileIn(BaseModel):
     full_name: Optional[str] = None
     phone: Optional[str] = None
     address: Optional[str] = None
-    birth_date: Optional[date] = None
     dni: Optional[str] = None
-    user_type: Optional[str] = None
+    university: Optional[str] = None
 
     @field_validator('full_name')
     @classmethod
@@ -31,12 +29,12 @@ class UpdateProfileIn(BaseModel):
             raise ValueError('El DNI debe tener al menos 5 caracteres')
         return v.strip() if v else None
 
-    @field_validator('user_type')
+    @field_validator('university')
     @classmethod
-    def validate_user_type(cls, v):
-        if v and v.upper() not in ['GENERAL', 'STUDENT', 'PROFESSOR']:
-            raise ValueError('El tipo de usuario debe ser: GENERAL, STUDENT o PROFESSOR')
-        return v.upper() if v else None
+    def validate_university(cls, v):
+        if v and len(v.strip()) < 2:
+            raise ValueError('La universidad debe tener al menos 2 caracteres')
+        return v.strip() if v else None
 
 class UpdateProfileOut(BaseModel):
     user_id: int
@@ -44,9 +42,8 @@ class UpdateProfileOut(BaseModel):
     email: EmailStr
     phone: Optional[str] = None
     address: Optional[str] = None
-    birth_date: Optional[str] = None
     dni: Optional[str] = None
-    user_type: str
+    university: Optional[str] = None
     message: str
 
 
@@ -57,7 +54,7 @@ class UserProfileOut(BaseModel):
     phone: Optional[str] = None
     address: Optional[str] = None
     dni: Optional[str] = None
-    user_type: str
+    university: Optional[str] = None
     is_active: bool
 
 
