@@ -1,57 +1,91 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 from werkzeug.exceptions import NotFound, BadRequest
-from ..common.models import Book
+from . import service as catalog_service
 
 bp = Blueprint("catalog", __name__)
 
 @bp.errorhandler(404)
 @bp.errorhandler(NotFound)
 def handle_not_found(e):
-    return {
+    message = e.description if isinstance(e, NotFound) else "El recurso solicitado no existe"
+    return jsonify({
         "code": "NOT_FOUND",
-        "message": "El recurso solicitado no existe"
-    }, 404
+        "message": message
+    }), 404
 
 @bp.errorhandler(400)
 @bp.errorhandler(BadRequest)
 def handle_bad_request(e):
-    return {
+    return jsonify({
         "code": "BAD_REQUEST",
         "message": "La solicitud no es válida"
-    }, 400
+    }), 400
 
 @bp.errorhandler(Exception)
 def handle_internal_error(e):
-    return {
+    return jsonify({
         "code": "INTERNAL_ERROR",
         "message": "Ha ocurrido un error interno en el servidor"
-    }, 500
+    }), 500
 
-@bp.get("/books")
+@bp.route("/books", methods=["GET"])
 def list_books():
-    q = request.args.get("q", "")
-    query = Book.query
-    if q:
-        like = f"%{q}%"
-        query = query.filter((Book.title.ilike(like)) | (Book.author.ilike(like)) | (Book.isbn.ilike(like)))
-    books = query.limit(100).all()
-    return [{
-        "id": b.id, "isbn": b.isbn, "title": b.title, "author": b.author,
-        "available_copies": b.available_copies
-    } for b in books]
+    """
+    Lista libros populares/destacados de Google Books API.
+    Usage: GET /catalog/books
+    """
+    try:
+        results = catalog_service.list_popular_books(max_results=20)
+        return jsonify({"books": results, "count": len(results)}), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        raise e
 
-@bp.get("/books/<int:id>")
-def get_book_details(id):
-    book = Book.query.get(id)
-    if not book:
-        return {
-            "code": "BOOK_NOT_FOUND",
-            "message": f"No se encontró el libro con ID {id}"
-        }, 404
-    return {
-        "id": book.id,
-        "isbn": book.isbn,
-        "title": book.title,
-        "author": book.author,
-        "available_copies": book.available_copies
-    }
+@bp.route("/books/search", methods=["GET"])
+def search_books():
+    """
+    Searches for books on the external Google Books API.
+    Usage: GET /catalog/books/search?q=clean+code
+    """
+    query = request.args.get("q")
+    if not query:
+        return jsonify({"error": "El parámetro 'q' (query) es requerido"}), 400
+
+    try:
+        results = catalog_service.search_books_online(query)
+        return jsonify({"books": results, "count": len(results)}), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        raise e
+
+@bp.route("/books/id/<string:volume_id>", methods=["GET"])
+def get_book_details(volume_id):
+    """
+    Gets a single book's details from the Google Books API by its volume ID.
+    Usage: GET /catalog/books/id/zvQYMgAACAAJ
+    """
+    try:
+        book = catalog_service.get_book_by_volume_id(volume_id)
+        return jsonify(book), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 500
+    except NotFound as e:
+        raise e
+    except Exception as e:
+        raise e
+
+@bp.route("/books/category/<string:category>", methods=["GET"])
+def search_by_category(category):
+    """
+    Searches for books by category/subject on Google Books API.
+    Usage: GET /catalog/books/category/Technology
+    """
+    try:
+        results = catalog_service.search_books_by_category(category)
+        return jsonify({"books": results, "category": category, "count": len(results)}), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        raise e

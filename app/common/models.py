@@ -26,7 +26,6 @@ class UserProfile(db.Model):
     credential_id = db.Column(db.Integer, db.ForeignKey('auth.id'), unique=True, nullable=False)
     full_name = db.Column(db.String(200), nullable=True)
     phone = db.Column(db.String(20), nullable=True)
-    address = db.Column(db.String(300), nullable=True)
     dni = db.Column(db.String(20), unique=True, nullable=True)  # DNI o carnet
     university = db.Column(db.String(200), nullable=True)  # Universidad
 
@@ -46,6 +45,7 @@ class BookCategory(str, Enum):
 class Book(db.Model):
     __tablename__ = "books"
     id = db.Column(db.Integer, primary_key=True)
+    volume_id = db.Column(db.String(50), unique=True, nullable=True)  # Google Books Volume ID
     isbn = db.Column(db.String(20), unique=True)
     title = db.Column(db.String(200), nullable=False)
     author = db.Column(db.String(120))

@@ -3,13 +3,13 @@ from datetime import datetime
 from typing import Optional
 
 class CreateLoanIn(BaseModel):
-    book_id: int
+    volume_id: str
 
-    @field_validator('book_id')
+    @field_validator('volume_id')
     @classmethod
-    def validate_book_id(cls, v):
-        if v <= 0:
-            raise ValueError('El ID del libro debe ser un número positivo')
+    def validate_volume_id(cls, v):
+        if not v or not v.strip():
+            raise ValueError('El volume_id no puede estar vacío')
         return v
 
 class CreateLoanOut(BaseModel):

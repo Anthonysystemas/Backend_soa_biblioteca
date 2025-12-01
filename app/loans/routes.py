@@ -20,79 +20,24 @@ def create_loan():
     try:
         data = CreateLoanIn.model_validate(request.get_json() or {})
     except ValidationError as e:
-        errors = []
-        for error in e.errors():
-            errors.append({
-                "field": ".".join(str(x) for x in error["loc"]),
-                "message": error["msg"]
-            })
+        errors = [{"field": ".".join(map(str, err["loc"])), "message": err["msg"]} for err in e.errors()]
         return {"code": "VALIDATION_ERROR", "errors": errors}, 422
 
     uid = int(get_jwt_identity())
     out = create_loan_uc(uid, data)
 
-    if not out:
-        from app.common.models import Book, Loan, LoanStatus
-        book = Book.query.get(data.book_id)
-        
-        if not book:
-            return {"code": "BOOK_NOT_FOUND", "message": "El libro no existe"}, 404
-        
-        existing_loan = Loan.query.filter_by(credential_id=uid, book_id=data.book_id, status=LoanStatus.ACTIVE).first()
-        if existing_loan:
-            return {
-                "code": "ALREADY_BORROWED",
-                "message": "Ya tienes un préstamo activo de este libro. Devuélvelo antes de solicitar otro.",
-                "loan_id": existing_loan.id
-            }, 409
-        
-        if book.available_copies <= 0:
-            from app.waitlist.service import add_to_waitlist
-            from app.common.models import Waitlist, WaitlistStatus
-            
-            existing_waitlist = Waitlist.query.filter_by(
-                credential_id=uid,
-                book_id=data.book_id
-            ).filter(
-                Waitlist.status.in_([WaitlistStatus.PENDING, WaitlistStatus.HELD])
-            ).first()
-            
-            if existing_waitlist:
-                return {
-                    "code": "ALREADY_IN_WAITLIST",
-                    "message": f"Ya estás en la lista de espera para este libro (estado: {existing_waitlist.status.value})",
-                    "waitlist_id": existing_waitlist.id,
-                    "status": existing_waitlist.status.value
-                }, 409
-            
-            waitlist_id = add_to_waitlist(uid, data.book_id)
-            
-            from app.common.models import Notification, NotificationType
-            from app.extensions import db as db_ext
-            waitlist_notification = Notification(
-                credential_id=uid,
-                type=NotificationType.INFO,
-                title="Agregado a Lista de Espera",
-                message=f"No hay copias disponibles de '{book.title}'. Has sido agregado a la lista de espera. Te notificaremos cuando esté disponible.",
-                is_read=False
-            )
-            db_ext.session.add(waitlist_notification)
-            db_ext.session.commit()
-            
-            return {
-                "code": "ADDED_TO_WAITLIST",
-                "message": "No hay copias disponibles. Has sido agregado a la lista de espera automáticamente",
-                "waitlist_id": waitlist_id,
-                "book_id": data.book_id,
-                "book_title": book.title
-            }, 202
-        
-        active_count = Loan.query.filter_by(credential_id=uid, status=LoanStatus.ACTIVE).count()
-        if active_count >= 5:
-            return {"code": "MAX_LOANS_EXCEEDED", "message": "Has alcanzado el límite de 5 préstamos activos"}, 409
-        
-        return {"code": "LOAN_CREATION_FAILED", "message": "No se pudo crear el préstamo"}, 400
+    if isinstance(out, str):
+        error_map = {
+            "BOOK_NOT_FOUND_ON_GOOGLE": (404, "El libro con el volume_id especificado no fue encontrado en Google Books."),
+            "BOOK_IMPORT_FAILED": (500, "Ocurrió un error al importar el libro a la biblioteca local."),
+            "ALREADY_BORROWED": (409, "Ya tienes un préstamo activo de este libro."),
+            "NO_COPIES_AVAILABLE": (409, "No hay copias disponibles de este libro. Puedes intentar ser añadido a la lista de espera."),
+            "MAX_LOANS_EXCEEDED": (409, "Has alcanzado el límite máximo de préstamos activos.")
+        }
+        status, message = error_map.get(out, (400, "No se pudo crear el préstamo por una razón desconocida."))
+        return {"code": out, "message": message}, status
 
+    # Si todo fue bien, 'out' es un objeto CreateLoanOut
     return out.model_dump(), 201
 
 

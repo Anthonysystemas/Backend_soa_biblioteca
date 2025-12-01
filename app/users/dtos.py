@@ -4,7 +4,6 @@ from typing import Optional
 class UpdateProfileIn(BaseModel):
     full_name: Optional[str] = None
     phone: Optional[str] = None
-    address: Optional[str] = None
     dni: Optional[str] = None
     university: Optional[str] = None
 
@@ -41,7 +40,6 @@ class UpdateProfileOut(BaseModel):
     full_name: str
     email: EmailStr
     phone: Optional[str] = None
-    address: Optional[str] = None
     dni: Optional[str] = None
     university: Optional[str] = None
     message: str
@@ -52,7 +50,6 @@ class UserProfileOut(BaseModel):
     full_name: str
     email: EmailStr
     phone: Optional[str] = None
-    address: Optional[str] = None
     dni: Optional[str] = None
     university: Optional[str] = None
     is_active: bool

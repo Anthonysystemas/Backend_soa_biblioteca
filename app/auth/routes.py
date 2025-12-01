@@ -43,8 +43,17 @@ def register():
         return {"code": "VALIDATION_ERROR", "errors": errors}, 422
 
     out = register_uc(data)
+    if isinstance(out, str):
+        if out == "EMAIL_EXISTS":
+            return {"code": "EMAIL_EXISTS", "message": "El email ya está registrado"}, 409
+        if out == "DNI_EXISTS":
+            return {"code": "DNI_EXISTS", "message": "El DNI ya está registrado"}, 409
+        if out == "CONFLICT":
+            return {"code": "CONFLICT", "message": "Ocurrió un conflicto al crear el usuario. Intente de nuevo."}, 409
+    
     if not out:
-        return {"code": "EMAIL_EXISTS", "message": "El email ya está registrado"}, 409
+        return {"code": "UNKNOWN_ERROR", "message": "Ocurrió un error desconocido"}, 500
+
     return out.model_dump(), 201
 
 

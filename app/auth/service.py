@@ -53,42 +53,51 @@ def refresh(credential_id: int) -> RefreshOut:
     return RefreshOut(access_token=new_access)
 
 
+from sqlalchemy.exc import IntegrityError
+
 def register(data: RegisterIn) -> Optional[RegisterOut]:
-    # Verificar si el email ya existe
-    existing_credential = Credential.query.filter_by(email=data.email).first()
-    if existing_credential:
-        return None
+    # Verificar si el email o DNI ya existen
+    if Credential.query.filter_by(email=data.email).first():
+        return "EMAIL_EXISTS"
+    if UserProfile.query.filter_by(dni=data.dni).first():
+        return "DNI_EXISTS"
 
-    # Crear nueva credencial (tabla auth)
-    new_credential = Credential(
-        email=data.email,
-        password_hash=hash_password(data.password),
-        is_active=True
-    )
-    db.session.add(new_credential)
-    db.session.flush()  # Para obtener el ID antes del commit
+    try:
+        # Crear nueva credencial (tabla auth)
+        new_credential = Credential(
+            email=data.email,
+            password_hash=hash_password(data.password),
+            is_active=True
+        )
+        db.session.add(new_credential)
+        db.session.flush()  # Para obtener el ID antes del commit
 
-    # Crear perfil de usuario (tabla users)
-    new_profile = UserProfile(
-        credential_id=new_credential.id,
-        full_name=data.full_name,
-        dni=data.dni,
-        phone=data.phone,
-        university=data.university
-    )
-    db.session.add(new_profile)
-    db.session.commit()
+        # Crear perfil de usuario (tabla users)
+        new_profile = UserProfile(
+            credential_id=new_credential.id,
+            full_name=data.full_name,
+            dni=data.dni,
+            phone=data.phone,
+            university=data.university
+        )
+        db.session.add(new_profile)
 
-    # Crear notificación de bienvenida
-    welcome_notification = Notification(
-        credential_id=new_credential.id,
-        type=NotificationType.SUCCESS,
-        title="¡Bienvenido a la Biblioteca!",
-        message=f"Hola {data.full_name}, tu cuenta ha sido creada exitosamente. Ya puedes comenzar a solicitar préstamos de libros.",
-        is_read=False
-    )
-    db.session.add(welcome_notification)
-    db.session.commit()
+        # Crear notificación de bienvenida
+        welcome_notification = Notification(
+            credential_id=new_credential.id,
+            type=NotificationType.SUCCESS,
+            title="¡Bienvenido a la Biblioteca!",
+            message=f"Hola {data.full_name}, tu cuenta ha sido creada exitosamente. Ya puedes comenzar a solicitar préstamos de libros.",
+            is_read=False
+        )
+        db.session.add(welcome_notification)
+        
+        db.session.commit()
+
+    except IntegrityError:
+        db.session.rollback()
+        # Esto puede ocurrir si hay una race condition
+        return "CONFLICT"
 
     # Publish user registered event
     publish_user_registered(

@@ -22,8 +22,6 @@ def update_profile(credential_id: int, data: UpdateProfileIn) -> Optional[Update
         profile.full_name = data.full_name
     if data.phone is not None:
         profile.phone = data.phone
-    if data.address is not None:
-        profile.address = data.address
     if data.dni is not None:
         profile.dni = data.dni
     if data.university is not None:
@@ -36,7 +34,6 @@ def update_profile(credential_id: int, data: UpdateProfileIn) -> Optional[Update
         full_name=profile.full_name or "Sin nombre",
         email=credential.email,
         phone=profile.phone,
-        address=profile.address,
         dni=profile.dni,
         university=profile.university,
         message="Perfil actualizado exitosamente"
@@ -57,7 +54,6 @@ def get_user_profile(credential_id: int) -> Optional[UserProfileOut]:
         full_name=profile.full_name or "Sin nombre",
         email=credential.email,
         phone=profile.phone,
-        address=profile.address,
         dni=profile.dni,
         university=profile.university,
         is_active=credential.is_active
