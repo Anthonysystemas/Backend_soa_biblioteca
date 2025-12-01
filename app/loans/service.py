@@ -13,28 +13,67 @@ LOAN_DURATION_DAYS = 14
 MAX_RENEWALS = 1
 
 
+from app.catalog.service import get_book_by_volume_id
+from werkzeug.exceptions import NotFound
+
 def create_loan(credential_id: int, data: CreateLoanIn) -> Optional[CreateLoanOut]:
-    book = Book.query.get(data.book_id)
+    # Buscar libro por volume_id en la base de datos local
+    book = Book.query.filter_by(volume_id=data.volume_id).first()
+
+    # Si el libro no existe localmente, importarlo de Google Books
     if not book:
-        return None
-    
+        try:
+            google_book_data = get_book_by_volume_id(data.volume_id)
+            if not google_book_data:
+                return "BOOK_NOT_FOUND_ON_GOOGLE"
+            
+            # Validar que tenemos los datos mínimos necesarios
+            if not google_book_data.get("id") or not google_book_data.get("title"):
+                print(f"Datos incompletos del libro de Google Books: {google_book_data}")
+                return "BOOK_IMPORT_FAILED"
+            
+            # Crear el libro en la base de datos local
+            published_date = google_book_data.get("published_date", "")
+            publication_year = published_date[:4] if published_date and len(published_date) >= 4 else None
+            
+            book = Book(
+                volume_id=google_book_data.get("id"),
+                title=google_book_data.get("title", "Título no disponible"),
+                author=", ".join(google_book_data.get("authors", [])) if google_book_data.get("authors") else "Autor desconocido",
+                description=google_book_data.get("description"),
+                isbn=google_book_data.get("isbn_13") or google_book_data.get("isbn_10"),
+                pages=google_book_data.get("page_count", 0),
+                publication_year=publication_year,
+                available_copies=1  # Default para un libro nuevo
+            )
+            db.session.add(book)
+            db.session.flush() # Para obtener el ID del nuevo libro
+        except NotFound:
+            return "BOOK_NOT_FOUND_ON_GOOGLE"
+        except Exception as e:
+            print(f"Error al importar libro de Google Books: {str(e)}")
+            db.session.rollback()
+            return "BOOK_IMPORT_FAILED"
+
+    # --- Lógica de préstamo existente (con el libro ya cargado) ---
+
     existing_active_loan = Loan.query.filter_by(
         credential_id=credential_id,
-        book_id=data.book_id,
+        book_id=book.id,
         status=LoanStatus.ACTIVE
     ).first()
     
     if existing_active_loan:
-        return None
+        return "ALREADY_BORROWED"
     
     held_waitlist = Waitlist.query.filter_by(
         credential_id=credential_id,
-        book_id=data.book_id,
+        book_id=book.id,
         status=WaitlistStatus.HELD
     ).first()
     
     if not held_waitlist and book.available_copies <= 0:
-        return None
+        return "NO_COPIES_AVAILABLE"
     
     active_loans_count = Loan.query.filter_by(
         credential_id=credential_id,
@@ -42,7 +81,7 @@ def create_loan(credential_id: int, data: CreateLoanIn) -> Optional[CreateLoanOu
     ).count()
     
     if active_loans_count >= MAX_ACTIVE_LOANS:
-        return None
+        return "MAX_LOANS_EXCEEDED"
     
     loan_date = datetime.utcnow()
     due_date = loan_date + timedelta(days=LOAN_DURATION_DAYS)
@@ -55,7 +94,6 @@ def create_loan(credential_id: int, data: CreateLoanIn) -> Optional[CreateLoanOu
         renewed=False
     )
     
-    # Add history event
     new_loan.history.append(
         LoanHistory(event_type=LoanEventType.CREATED, notes="Préstamo creado en el sistema")
     )
@@ -83,7 +121,6 @@ def create_loan(credential_id: int, data: CreateLoanIn) -> Optional[CreateLoanOu
     db.session.add(loan_notification)
     db.session.commit()
     
-    # Publish loan created event
     publish_loan_created(
         loan_id=new_loan.id,
         user_id=credential_id,
