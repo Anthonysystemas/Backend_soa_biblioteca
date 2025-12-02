@@ -53,7 +53,28 @@ class Book(db.Model):
     pages = db.Column(db.Integer, default=0)
     publication_year = db.Column(db.Integer, nullable=True)
     description = db.Column(db.Text, nullable=True)
-    available_copies = db.Column(db.Integer, default=0)
+    
+    # Relación con Inventory
+    inventory = db.relationship('Inventory', backref='book', uselist=False, lazy=True, cascade="all, delete-orphan")
+
+
+# INVENTORY - Tabla de inventario de libros
+
+
+class Inventory(db.Model):
+    __tablename__ = "inventory"
+    id = db.Column(db.Integer, primary_key=True)
+    book_id = db.Column(db.Integer, db.ForeignKey('books.id'), unique=True, nullable=False)
+    available_copies = db.Column(db.Integer, default=0, nullable=False)
+    reserved_copies = db.Column(db.Integer, default=0, nullable=False)
+    damaged_copies = db.Column(db.Integer, default=0, nullable=False)
+    total_copies = db.Column(db.Integer, default=0, nullable=False)
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    @property
+    def total_physical_copies(self):
+        """Total de copias físicas = disponibles + reservadas + dañadas"""
+        return self.available_copies + self.reserved_copies + self.damaged_copies
 
 class LoanStatus(str, Enum):
     ACTIVE = "ACTIVE"

@@ -9,7 +9,7 @@ from infrastructure.celery_app import celery
 )
 def hold_copy_async(self, waitlist_id: int):
     from app.extensions import db
-    from app.common.models import Waitlist, WaitlistStatus, Book
+    from app.common.models import Waitlist, WaitlistStatus, Book, Inventory
 
     try:
         with db.session.begin():
@@ -18,10 +18,11 @@ def hold_copy_async(self, waitlist_id: int):
                 return {"status": "ignored", "id": waitlist_id}
 
             book = db.session.get(Book, w.book_id)
-            if not book or (book.available_copies or 0) <= 0:
+            inventory = book.inventory if book else None
+            if not book or not inventory or (inventory.available_copies or 0) <= 0:
                 return {"status": "no_stock_yet", "id": waitlist_id, "message": "Mantiene PENDING hasta que haya stock"}
 
-            book.available_copies -= 1
+            inventory.available_copies -= 1
             w.status = WaitlistStatus.HELD
 
         return {"status": "held", "id": waitlist_id, "book_id": w.book_id}

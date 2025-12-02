@@ -152,6 +152,65 @@
       "description": "Busca libros por categoría (Technology, Fiction, etc.)"
     },
     {
+      "_id": "folder_inventory",
+      "_type": "request_group",
+      "name": "Inventory",
+      "parentId": "wrk_backend_biblioteca"
+    },
+    {
+      "_id": "req_list_inventory",
+      "_type": "request",
+      "name": "List All Inventory",
+      "method": "GET",
+      "url": "{{ _.base_url }}/inventory/books",
+      "parentId": "folder_inventory",
+      "description": "Lista todos los libros del inventario local con su stock",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_get_book_by_volume_id",
+      "_type": "request",
+      "name": "Get Book Stock by Volume ID",
+      "method": "GET",
+      "url": "{{ _.base_url }}/inventory/books/{{ _.volume_id }}",
+      "parentId": "folder_inventory",
+      "description": "Busca libro por volume_id y muestra su stock local. Si no existe localmente, muestra stock 0.",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_update_book_stock",
+      "_type": "request",
+      "name": "Update Book Stock",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/inventory/books/{{ _.volume_id }}/stock",
+      "parentId": "folder_inventory",
+      "description": "Actualiza el stock de un libro por volume_id (el libro debe existir en inventario local)",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"available_copies\": 5\n}"
+      }
+    },
+    {
       "_id": "folder_users",
       "_type": "request_group",
       "name": "Users",
@@ -504,29 +563,6 @@
       "method": "GET",
       "url": "{{ _.base_url }}/health",
       "parentId": "folder_health"
-    },
-    {
-      "_id": "folder_monitoring",
-      "_type": "request_group",
-      "name": "Monitoring (SOA)",
-      "parentId": "wrk_backend_biblioteca"
-    },
-    {
-      "_id": "req_flower_ui",
-      "_type": "request",
-      "name": "Flower Dashboard",
-      "method": "GET",
-      "url": "{{ _.flower_url }}",
-      "parentId": "folder_monitoring",
-      "description": "Celery monitoring dashboard - Open in browser to see workers, queues (default, waitlist, events), tasks, and DLQ"
-    },
-    {
-      "_id": "req_flower_api_workers",
-      "_type": "request",
-      "name": "Flower API - Workers",
-      "method": "GET",
-      "url": "{{ _.flower_url }}/api/workers",
-      "parentId": "folder_monitoring"
     }
   ]
 }

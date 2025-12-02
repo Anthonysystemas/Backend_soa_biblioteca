@@ -20,7 +20,6 @@ services:
     volumes:
       - ./app:/app/app
       - ./infrastructure:/app/infrastructure
-      - ./migrations:/app/migrations
 
   worker:
     build:

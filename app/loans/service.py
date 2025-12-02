@@ -1,6 +1,6 @@
 from typing import Optional, List
 from datetime import datetime, timedelta
-from app.common.models import Loan, LoanStatus, Book, Credential, Waitlist, WaitlistStatus, LoanHistory, LoanEventType
+from app.common.models import Loan, LoanStatus, Book, Inventory, Credential, Waitlist, WaitlistStatus, LoanHistory, LoanEventType
 from app.extensions import db
 from infrastructure.events import publish_loan_created, publish_loan_returned, publish_loan_renewed
 from .dtos import (
@@ -43,11 +43,15 @@ def create_loan(credential_id: int, data: CreateLoanIn) -> Optional[CreateLoanOu
                 description=google_book_data.get("description"),
                 isbn=google_book_data.get("isbn_13") or google_book_data.get("isbn_10"),
                 pages=google_book_data.get("page_count", 0),
-                publication_year=publication_year,
-                available_copies=1  # Default para un libro nuevo
+                publication_year=publication_year
             )
             db.session.add(book)
             db.session.flush() # Para obtener el ID del nuevo libro
+            
+            # Crear registro de inventario con stock 0
+            inventory = Inventory(book_id=book.id, available_copies=0, reserved_copies=0, damaged_copies=0, total_copies=0)
+            db.session.add(inventory)
+            db.session.flush()
         except NotFound:
             return "BOOK_NOT_FOUND_ON_GOOGLE"
         except Exception as e:
@@ -72,8 +76,31 @@ def create_loan(credential_id: int, data: CreateLoanIn) -> Optional[CreateLoanOu
         status=WaitlistStatus.HELD
     ).first()
     
-    if not held_waitlist and book.available_copies <= 0:
-        return "NO_COPIES_AVAILABLE"
+    # Si no hay copias disponibles y no tiene reserva, agregar a waitlist automáticamente
+    inventory = book.inventory
+    if not inventory:
+        inventory = Inventory(book_id=book.id, available_copies=0, reserved_copies=0, damaged_copies=0, total_copies=0)
+        db.session.add(inventory)
+        db.session.flush()
+    
+    if not held_waitlist and inventory.available_copies <= 0:
+        from app.waitlist.service import add_to_waitlist
+        
+        # Verificar si ya está en waitlist
+        existing_waitlist = Waitlist.query.filter_by(
+            credential_id=credential_id,
+            book_id=book.id
+        ).filter(
+            Waitlist.status.in_([WaitlistStatus.PENDING, WaitlistStatus.HELD])
+        ).first()
+        
+        if existing_waitlist:
+            return "ALREADY_IN_WAITLIST"
+        
+        # Agregar a waitlist automáticamente
+        waitlist_id = add_to_waitlist(credential_id, book.id)
+        
+        return "ADDED_TO_WAITLIST"
     
     active_loans_count = Loan.query.filter_by(
         credential_id=credential_id,
@@ -101,7 +128,7 @@ def create_loan(credential_id: int, data: CreateLoanIn) -> Optional[CreateLoanOu
     if held_waitlist:
         held_waitlist.status = WaitlistStatus.CONFIRMED
     else:
-        book.available_copies -= 1
+        inventory.available_copies -= 1
     
     db.session.add(new_loan)
     db.session.commit()
@@ -222,7 +249,10 @@ def return_loan(loan_id: int, credential_id: int) -> Optional[ReturnLoanOut]:
         LoanHistory(event_type=LoanEventType.RETURNED, notes="Libro devuelto por el usuario")
     )
 
-    book.available_copies += 1
+    # Incrementar stock en tabla inventory
+    inventory = book.inventory
+    if inventory:
+        inventory.available_copies += 1
     
     db.session.commit()
     

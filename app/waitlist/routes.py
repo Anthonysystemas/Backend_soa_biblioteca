@@ -2,7 +2,7 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from pydantic import ValidationError, BaseModel, field_validator
 from ..extensions import db
-from ..common.models import Waitlist, WaitlistStatus, Book, Credential, Notification, NotificationType
+from ..common.models import Waitlist, WaitlistStatus, Book, Inventory, Credential, Notification, NotificationType
 from .service import add_to_waitlist
 
 bp = Blueprint("waitlist", __name__)
@@ -113,6 +113,7 @@ def get_waitlist_details(wid: int):
         return {"msg": "No tienes permiso para ver esta waitlist"}, 403
     
     book = Book.query.get(waitlist.book_id)
+    inventory = book.inventory if book else None
     
     return {
         "waitlist_id": waitlist.id,
@@ -120,7 +121,7 @@ def get_waitlist_details(wid: int):
         "book_title": book.title if book else "Unknown",
         "book_author": book.author if book else "Unknown",
         "book_isbn": book.isbn if book else None,
-        "book_available_copies": book.available_copies if book else 0,
+        "book_available_copies": inventory.available_copies if inventory else 0,
         "status": waitlist.status.value,
         "created_at": waitlist.created_at.isoformat() if waitlist.created_at else None
     }, 200
@@ -139,8 +140,8 @@ def cancel(wid: int):
     
     if w.status == WaitlistStatus.HELD:
         book = Book.query.get(w.book_id)
-        if book:
-            book.available_copies += 1
+        if book and book.inventory:
+            book.inventory.available_copies += 1
     
     w.status = WaitlistStatus.CANCELLED
     db.session.commit()

@@ -31,10 +31,16 @@ def create_loan():
             "BOOK_NOT_FOUND_ON_GOOGLE": (404, "El libro con el volume_id especificado no fue encontrado en Google Books."),
             "BOOK_IMPORT_FAILED": (500, "Ocurrió un error al importar el libro a la biblioteca local."),
             "ALREADY_BORROWED": (409, "Ya tienes un préstamo activo de este libro."),
-            "NO_COPIES_AVAILABLE": (409, "No hay copias disponibles de este libro. Puedes intentar ser añadido a la lista de espera."),
+            "ALREADY_IN_WAITLIST": (409, "Ya estás en la lista de espera para este libro."),
+            "ADDED_TO_WAITLIST": (200, "No hay copias disponibles. Has sido agregado automáticamente a la lista de espera. Te notificaremos cuando el libro esté disponible."),
             "MAX_LOANS_EXCEEDED": (409, "Has alcanzado el límite máximo de préstamos activos.")
         }
         status, message = error_map.get(out, (400, "No se pudo crear el préstamo por una razón desconocida."))
+        
+        # ADDED_TO_WAITLIST es un éxito, no un error
+        if out == "ADDED_TO_WAITLIST":
+            return {"code": out, "message": message}, status
+        
         return {"code": out, "message": message}, status
 
     # Si todo fue bien, 'out' es un objeto CreateLoanOut

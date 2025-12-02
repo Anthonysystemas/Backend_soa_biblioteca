@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from collections import Counter
 from sqlalchemy import func
 from app.common.models import (
-    Credential, UserProfile, Book, BookCategory, Loan, LoanStatus, 
+    Credential, UserProfile, Book, Inventory, BookCategory, Loan, LoanStatus, 
     Waitlist, WaitlistStatus, Report, ReportType
 )
 from app.extensions import db
@@ -194,10 +194,11 @@ def get_popular_books(limit: int = 10) -> PopularBooksReport:
         Book.title,
         Book.author,
         Book.category,
-        Book.available_copies,
+        Inventory.available_copies,
         func.count(Loan.id).label('loan_count')
-    ).outerjoin(Loan, Book.id == Loan.book_id)\
-     .group_by(Book.id)\
+    ).outerjoin(Inventory, Book.id == Inventory.book_id)\
+     .outerjoin(Loan, Book.id == Loan.book_id)\
+     .group_by(Book.id, Inventory.available_copies)\
      .order_by(func.count(Loan.id).desc())\
      .limit(limit)\
      .all()
@@ -270,7 +271,7 @@ def get_general_stats() -> GeneralStatsOut:
     
     total_users = Credential.query.count()
     total_books = Book.query.count()
-    total_copies = db.session.query(func.sum(Book.available_copies)).scalar() or 0
+    total_copies = db.session.query(func.sum(Inventory.available_copies)).scalar() or 0
     total_loans = Loan.query.count()
     active_loans = Loan.query.filter(
         Loan.status.in_([LoanStatus.ACTIVE, LoanStatus.RENEWED])
