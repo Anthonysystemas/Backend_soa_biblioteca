@@ -110,17 +110,20 @@ def get_books_by_category(category: str) -> BooksByCategoryOut:
     except ValueError:
         return BooksByCategoryOut(category=category, books=[], total_books=0)
     
-    books = Book.query.filter_by(category=cat_enum).all()
+    results = db.session.query(Book, Inventory)\
+        .outerjoin(Inventory, Book.id == Inventory.book_id)\
+        .filter(Book.category == cat_enum)\
+        .all()
     
     items = [
         BookByCategoryItem(
-            book_id=b.id,
-            title=b.title,
-            author=b.author,
-            pages=b.pages or 0,
-            available_copies=b.available_copies or 0
+            book_id=book.id,
+            title=book.title,
+            author=book.author,
+            pages=book.pages or 0,
+            available_copies=inventory.available_copies if inventory else 0
         )
-        for b in books
+        for book, inventory in results
     ]
     
     return BooksByCategoryOut(

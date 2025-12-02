@@ -96,6 +96,7 @@ def update_stock_by_volume_id(volume_id: str, data: UpdateStockIn) -> Optional[I
     """
     Actualiza el stock de un libro por su volume_id.
     El libro debe existir en la BD local.
+    Valida que el stock no sea menor a los préstamos activos.
     """
     book = Book.query.filter_by(volume_id=volume_id).first()
     if not book:
@@ -106,6 +107,16 @@ def update_stock_by_volume_id(volume_id: str, data: UpdateStockIn) -> Optional[I
     if not inventory:
         inventory = Inventory(book_id=book.id, available_copies=0, reserved_copies=0, damaged_copies=0, total_copies=0)
         db.session.add(inventory)
+    
+    # VALIDACIÓN: Verificar que el nuevo stock no sea menor a los préstamos activos
+    active_loans_count = Loan.query.filter_by(
+        book_id=book.id,
+        status=LoanStatus.ACTIVE
+    ).count()
+    
+    if data.available_copies < active_loans_count:
+        # Retornar error de validación
+        return {"error": "STOCK_BELOW_ACTIVE_LOANS", "active_loans": active_loans_count}
     
     inventory.available_copies = data.available_copies
     inventory.total_copies = inventory.available_copies + inventory.reserved_copies + inventory.damaged_copies

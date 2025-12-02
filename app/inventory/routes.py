@@ -53,4 +53,13 @@ def update_book_stock(volume_id: str):
     if not result:
         return {"code": "BOOK_NOT_FOUND", "message": f"No se encontró el libro con volume_id {volume_id} en el inventario local"}, 404
     
+    # Verificar si es un error de validación
+    if isinstance(result, dict) and "error" in result:
+        if result["error"] == "STOCK_BELOW_ACTIVE_LOANS":
+            return {
+                "code": "STOCK_BELOW_ACTIVE_LOANS",
+                "message": f"No se puede reducir el stock a {data.available_copies}. Hay {result['active_loans']} préstamos activos. Espera a que se devuelvan los libros primero.",
+                "active_loans": result["active_loans"]
+            }, 409
+    
     return result.model_dump(), 200
