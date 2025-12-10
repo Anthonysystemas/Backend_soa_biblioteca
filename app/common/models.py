@@ -28,6 +28,7 @@ class UserProfile(db.Model):
     phone = db.Column(db.String(20), nullable=True)
     dni = db.Column(db.String(20), unique=True, nullable=True)  # DNI o carnet
     university = db.Column(db.String(200), nullable=True)  # Universidad
+    profile_image_url = db.Column(db.String(500), nullable=True)  # URL de imagen de perfil
 
 class BookCategory(str, Enum):
     FICTION = "FICTION"
@@ -187,3 +188,9 @@ class FailedTask(db.Model):
 
 def create_all_tables():
     db.create_all()
+
+
+class TokenBlocklist(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    jti = db.Column(db.String(36), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

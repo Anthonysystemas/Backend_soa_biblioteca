@@ -1,10 +1,11 @@
 # app/auth/routes.py
 from flask import Blueprint, request
 from pydantic import ValidationError
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from .dtos import LoginIn, RegisterIn
 from .service import (
-    login as login_uc, me as me_uc, refresh as refresh_uc, register as register_uc
+    login as login_uc, me as me_uc, refresh as refresh_uc, register as register_uc,
+    logout as logout_uc
 )
 
 bp = Blueprint("auth", __name__)
@@ -27,6 +28,14 @@ def login():
         return {"code": "UNAUTHORIZED", "message": "Credenciales inválidas"}, 401
     
     return out.model_dump(), 200
+
+
+@bp.post("/logout")
+@jwt_required()
+def logout():
+    raw_jwt = get_jwt()
+    logout_uc(raw_jwt)
+    return {"message": "Sesión cerrada exitosamente"}, 200
 
 
 @bp.post("/register")

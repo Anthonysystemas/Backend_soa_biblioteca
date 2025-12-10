@@ -3,7 +3,7 @@ from typing import Optional
 
 
 class UpdateStockIn(BaseModel):
-    available_copies: int = Field(..., ge=0, description="Nuevo número de copias disponibles")
+    quantity_to_add: int = Field(..., ge=0, description="Número de copias para AÑADIR al stock existente")
 
 
 class InventoryBookOut(BaseModel):

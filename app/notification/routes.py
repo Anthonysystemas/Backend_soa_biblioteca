@@ -15,7 +15,18 @@ def get_my_notifications():
     uid = int(get_jwt_identity())
     unread_only = request.args.get("unread_only", "false").lower() == "true"
     
-    out = get_user_notifications_uc(uid, unread_only)
+    # Filtro por días recientes (opcional)
+    days = request.args.get("days", None)
+    days_int = None
+    if days:
+        try:
+            days_int = int(days)
+            if days_int <= 0:
+                return {"code": "INVALID_PARAMETER", "message": "El parámetro 'days' debe ser un número positivo"}, 400
+        except ValueError:
+            return {"code": "INVALID_PARAMETER", "message": "El parámetro 'days' debe ser un número entero"}, 400
+    
+    out = get_user_notifications_uc(uid, unread_only, days_int)
     return out.model_dump(), 200
 
 

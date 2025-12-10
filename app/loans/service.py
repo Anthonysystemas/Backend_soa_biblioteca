@@ -1,6 +1,6 @@
 from typing import Optional, List
 from datetime import datetime, timedelta
-from app.common.models import Loan, LoanStatus, Book, Inventory, Credential, Waitlist, WaitlistStatus, LoanHistory, LoanEventType
+from app.common.models import Loan, LoanStatus, Book, Inventory, Credential, Waitlist, WaitlistStatus, LoanHistory, LoanEventType, Report, ReportType
 from app.extensions import db
 from infrastructure.events import publish_loan_created, publish_loan_returned, publish_loan_renewed
 from .dtos import (
@@ -11,6 +11,15 @@ from .dtos import (
 MAX_ACTIVE_LOANS = 5
 LOAN_DURATION_DAYS = 14
 MAX_RENEWALS = 1
+
+
+def invalidate_dashboard_cache(credential_id: int):
+    """Elimina el cache del dashboard para un usuario específico"""
+    Report.query.filter_by(
+        credential_id=credential_id,
+        report_type=ReportType.DASHBOARD
+    ).delete()
+    db.session.commit()
 
 
 from app.catalog.service import get_book_by_volume_id
@@ -61,6 +70,7 @@ def create_loan(credential_id: int, data: CreateLoanIn) -> Optional[CreateLoanOu
 
     # --- Lógica de préstamo existente (con el libro ya cargado) ---
 
+    # Verificar si ya tiene un préstamo activo de este libro
     existing_active_loan = Loan.query.filter_by(
         credential_id=credential_id,
         book_id=book.id,
@@ -69,6 +79,17 @@ def create_loan(credential_id: int, data: CreateLoanIn) -> Optional[CreateLoanOu
     
     if existing_active_loan:
         return "ALREADY_BORROWED"
+    
+    # Verificar si ya tiene una reserva activa de este libro
+    existing_waitlist = Waitlist.query.filter_by(
+        credential_id=credential_id,
+        book_id=book.id
+    ).filter(
+        Waitlist.status.in_([WaitlistStatus.PENDING])
+    ).first()
+    
+    if existing_waitlist:
+        return "ALREADY_IN_WAITLIST"
     
     held_waitlist = Waitlist.query.filter_by(
         credential_id=credential_id,
@@ -147,6 +168,9 @@ def create_loan(credential_id: int, data: CreateLoanIn) -> Optional[CreateLoanOu
     )
     db.session.add(loan_notification)
     db.session.commit()
+    
+    # Invalidar cache del dashboard
+    invalidate_dashboard_cache(credential_id)
     
     publish_loan_created(
         loan_id=new_loan.id,
@@ -266,6 +290,9 @@ def return_loan(loan_id: int, credential_id: int) -> Optional[ReturnLoanOut]:
     )
     db.session.add(return_notification)
     db.session.commit()
+    
+    # Invalidar cache del dashboard
+    invalidate_dashboard_cache(credential_id)
     
     # Publish loan returned event
     publish_loan_returned(

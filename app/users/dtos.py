@@ -42,6 +42,7 @@ class UpdateProfileOut(BaseModel):
     phone: Optional[str] = None
     dni: Optional[str] = None
     university: Optional[str] = None
+    profile_image_url: Optional[str] = None
     message: str
 
 
@@ -52,6 +53,7 @@ class UserProfileOut(BaseModel):
     phone: Optional[str] = None
     dni: Optional[str] = None
     university: Optional[str] = None
+    profile_image_url: Optional[str] = None
     is_active: bool
 
 

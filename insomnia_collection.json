@@ -8,7 +8,7 @@
       "_id": "wrk_backend_biblioteca",
       "_type": "workspace",
       "name": "Backend Biblioteca SOA",
-      "description": "API REST con arquitectura SOA - Pub/Sub Events, DLQ, Flower Monitoring (port 5555)",
+      "description": "API REST con arquitectura SOA - API Gateway (Traefik), Message Broker (Redis), Async Tasks (Celery)",
       "scope": "collection"
     },
     {
@@ -16,8 +16,8 @@
       "_type": "environment",
       "name": "Base Environment",
       "data": {
-        "base_url": "http://localhost:8080",
-        "flower_url": "http://localhost:5555",
+        "base_url": "http://localhost",
+        "flower_url": "http://localhost/flower",
         "access_token": "",
         "refresh_token": "",
         "query": "python+programming",

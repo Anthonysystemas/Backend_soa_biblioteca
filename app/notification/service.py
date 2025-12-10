@@ -34,14 +34,21 @@ def create_notification(credential_id: int, data: CreateNotificationIn) -> Optio
         created_at=notification.created_at
     )
 
-def get_user_notifications(credential_id: int, unread_only: bool = False) -> NotificationListOut:
+def get_user_notifications(credential_id: int, unread_only: bool = False, days: Optional[int] = None) -> NotificationListOut:
     query = Notification.query.filter_by(credential_id=credential_id)
     
     if unread_only:
         query = query.filter_by(is_read=False)
     
+    # Filtrar por fecha si se especifica days
+    if days is not None:
+        from datetime import datetime, timedelta
+        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        query = query.filter(Notification.created_at >= cutoff_date)
+    
     notifications = query.order_by(Notification.created_at.desc()).all()
     
+    # Contar solo notificaciones no leídas (sin filtro de fecha para el contador global)
     unread_count = Notification.query.filter_by(
         credential_id=credential_id,
         is_read=False
@@ -60,8 +67,6 @@ def get_user_notifications(credential_id: int, unread_only: bool = False) -> Not
     ]
     
     total_count = len(items)
-    if unread_only:
-        assert total_count == unread_count, "Inconsistencia: total != unread_count cuando unread_only=true"
     
     return NotificationListOut(
         notifications=items,

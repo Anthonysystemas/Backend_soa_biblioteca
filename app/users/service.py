@@ -36,6 +36,7 @@ def update_profile(credential_id: int, data: UpdateProfileIn) -> Optional[Update
         phone=profile.phone,
         dni=profile.dni,
         university=profile.university,
+        profile_image_url=profile.profile_image_url,
         message="Perfil actualizado exitosamente"
     )
 
@@ -56,6 +57,7 @@ def get_user_profile(credential_id: int) -> Optional[UserProfileOut]:
         phone=profile.phone,
         dni=profile.dni,
         university=profile.university,
+        profile_image_url=profile.profile_image_url,
         is_active=credential.is_active
     )
 

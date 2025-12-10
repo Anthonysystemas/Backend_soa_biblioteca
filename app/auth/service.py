@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import secrets
 from flask_jwt_extended import create_access_token, create_refresh_token
 from app.common.security import verify_password, hash_password
-from app.common.models import Credential, UserProfile, Notification, NotificationType
+from app.common.models import Credential, UserProfile, Notification, NotificationType, TokenBlocklist
 from app.extensions import db
 from infrastructure.events import publish_user_registered
 from .dtos import (
@@ -31,6 +31,13 @@ def login(data: LoginIn) -> Optional[LoginOut]:
     access = create_access_token(identity=str(credential.id), additional_claims=claims)
     refresh = create_refresh_token(identity=str(credential.id))
     return LoginOut(access_token=access, refresh_token=refresh)
+
+
+def logout(raw_jwt: dict):
+    jti = raw_jwt["jti"]
+    new_blocked_token = TokenBlocklist(jti=jti)
+    db.session.add(new_blocked_token)
+    db.session.commit()
 
 
 def me(credential_id: int) -> MeOut:

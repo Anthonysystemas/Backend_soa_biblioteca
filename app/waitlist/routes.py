@@ -4,18 +4,19 @@ from pydantic import ValidationError, BaseModel, field_validator
 from ..extensions import db
 from ..common.models import Waitlist, WaitlistStatus, Book, Inventory, Credential, Notification, NotificationType
 from .service import add_to_waitlist
+from ..catalog.service import get_book_by_volume_id, add_book_to_catalog
 
 bp = Blueprint("waitlist", __name__)
 
 class AddToWaitlistIn(BaseModel):
-    book_id: int
+    volume_id: str
     
-    @field_validator('book_id')
+    @field_validator('volume_id')
     @classmethod
-    def validate_book_id(cls, v):
-        if v <= 0:
-            raise ValueError('El ID del libro debe ser un número positivo')
-        return v
+    def validate_volume_id(cls, v):
+        if not v or not v.strip():
+            raise ValueError('El volume_id no puede estar vacío')
+        return v.strip()
 
 @bp.post("")
 @jwt_required()
@@ -32,15 +33,30 @@ def add_to_waitlist_route():
         return {"code": "VALIDATION_ERROR", "errors": errors}, 422
     
     uid = int(get_jwt_identity())
-    book_id = data.book_id
+    volume_id = data.volume_id
     
-    book = Book.query.get(book_id)
+    # Buscar libro por volume_id en la base de datos local
+    book = Book.query.filter_by(volume_id=volume_id).first()
+    
+    # Si el libro no existe localmente, importarlo desde Google Books
     if not book:
-        return {"code": "BOOK_NOT_FOUND", "message": f"No se encontró el libro con ID {book_id}"}, 404
+        try:
+            # Verificar que existe en Google Books
+            google_book = get_book_by_volume_id(volume_id)
+            if not google_book:
+                return {"code": "BOOK_NOT_FOUND_ON_GOOGLE", "message": f"No se encontró el libro con volume_id {volume_id} en Google Books"}, 404
+            
+            # Importar el libro al catálogo local
+            book = add_book_to_catalog(volume_id)
+            if not book:
+                return {"code": "BOOK_IMPORT_FAILED", "message": "No se pudo importar el libro al catálogo local"}, 500
+        except Exception as e:
+            return {"code": "BOOK_IMPORT_FAILED", "message": f"Error al importar el libro: {str(e)}"}, 500
     
+    # Verificar si ya está en la lista de espera
     existing = Waitlist.query.filter_by(
         credential_id=uid,
-        book_id=book_id
+        book_id=book.id
     ).filter(
         Waitlist.status.in_([WaitlistStatus.PENDING, WaitlistStatus.HELD])
     ).first()
@@ -48,13 +64,28 @@ def add_to_waitlist_route():
     if existing:
         return {"code": "ALREADY_IN_WAITLIST", "message": "Ya estás en la lista de espera para este libro"}, 409
     
-    waitlist_id = add_to_waitlist(uid, book_id)
+    # Verificar si ya tiene un préstamo activo de este libro
+    from ..common.models import Loan, LoanStatus
+    active_loan = Loan.query.filter_by(
+        credential_id=uid,
+        book_id=book.id,
+        status=LoanStatus.ACTIVE
+    ).first()
+    
+    if active_loan:
+        return {"code": "ALREADY_BORROWED", "message": "Ya tienes un préstamo activo de este libro. No puedes hacer reserva."}, 409
+    
+    waitlist_id = add_to_waitlist(uid, book.id)
     
     return {
+        "reservation_id": waitlist_id,  # Frontend espera reservation_id
         "waitlist_id": waitlist_id,
-        "book_id": book_id,
+        "volume_id": book.volume_id,
+        "book_id": book.id,
         "book_title": book.title,
-        "status": "PENDING",
+        "user_id": uid,
+        "status": "ACTIVE",  # Frontend espera ACTIVE
+        "created_at": Waitlist.query.get(waitlist_id).created_at.strftime("%a, %d %b %Y %H:%M:%S GMT") if Waitlist.query.get(waitlist_id).created_at else None,
         "message": "Has sido agregado a la lista de espera. Se te notificará cuando el libro esté disponible."
     }, 202
 
@@ -157,6 +188,10 @@ def cancel(wid: int):
     db.session.add(cancel_notification)
     db.session.commit()
     
+    # Invalidar cache del dashboard
+    from .service import invalidate_dashboard_cache
+    invalidate_dashboard_cache(uid)
+    
     return {"status": w.status.value, "message": "Lista de espera cancelada exitosamente"}, 200
 
 @bp.post("/<int:wid>/confirm")
@@ -187,6 +222,10 @@ def confirm(wid: int):
     )
     db.session.add(confirm_notification)
     db.session.commit()
+    
+    # Invalidar cache del dashboard
+    from .service import invalidate_dashboard_cache
+    invalidate_dashboard_cache(uid)
     
     return {
         "waitlist_id": w.id,
